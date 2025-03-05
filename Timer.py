@@ -9,12 +9,20 @@ class TrainingTimer:
         # Inicializar pygame mixer para audio
         try:
             pygame.mixer.init()
-            sound_path = os.path.join(os.path.dirname(__file__), "Data", "Áudios", "beep-08b.wav")
+            # Caminho corrigido para o arquivo de som
+            base_dir = os.path.dirname(os.path.abspath(__file__))
+            sound_path = os.path.join(base_dir, "Data", "Áudios", "beep-08b.wav")
+            
             if os.path.exists(sound_path):
                 self.beep_sound = pygame.mixer.Sound(sound_path)
             else:
-                self.beep_sound = None
-                st.warning("Arquivo de som não encontrado. Alertas sonoros desativados.")
+                # Tentar caminho alternativo se o primeiro falhar
+                alt_sound_path = os.path.join(base_dir, "Assets", "beep-08b.wav")
+                if os.path.exists(alt_sound_path):
+                    self.beep_sound = pygame.mixer.Sound(alt_sound_path)
+                else:
+                    self.beep_sound = None
+                    st.warning("Arquivo de som não encontrado. Alertas sonoros desativados.")
         except Exception as e:
             self.beep_sound = None
             st.warning(f"Não foi possível inicializar o sistema de áudio: {e}")
@@ -350,6 +358,7 @@ def main():
     )
     
     timer = TrainingTimer()
+    timer.initialize_session_state()  # Add this line to initialize session state
     timer.create_ui()
 
 if __name__ == "__main__":
