@@ -9,16 +9,51 @@ class TrainingTimer:
         # Inicializar pygame mixer para audio
         try:
             pygame.mixer.init()
-            # Caminho corrigido para o arquivo de som
-            base_dir = os.path.dirname(os.path.abspath(__file__))
-            sound_path = os.path.join(base_dir, "Data", "Áudios", "beep-08b.wav")
             
-            if os.path.exists(sound_path):
-                self.beep_sound = pygame.mixer.Sound(sound_path)
+            # Caminho para salvar o arquivo de som baixado
+            base_dir = os.path.dirname(os.path.abspath(__file__))
+            sound_dir = os.path.join(base_dir, "Assets")
+            
+            # Criar diretório Assets se não existir
+            if not os.path.exists(sound_dir):
+                os.makedirs(sound_dir)
+                
+            # Caminho para o arquivo de som baixado
+            downloaded_sound_path = os.path.join(sound_dir, "beep_sound.mp3")
+            
+            # URL do som
+            sound_url = "https://cdn.pixabay.com/audio/2024/09/19/audio_3ba45d4346.mp3"
+            
+            # Verificar se o arquivo já foi baixado anteriormente
+            if not os.path.exists(downloaded_sound_path):
+                try:
+                    import requests
+                    # Baixar o arquivo de som
+                    response = requests.get(sound_url)
+                    if response.status_code == 200:
+                        with open(downloaded_sound_path, 'wb') as f:
+                            f.write(response.content)
+                        st.success("Som baixado com sucesso!")
+                    else:
+                        st.warning(f"Não foi possível baixar o som: {response.status_code}")
+                except Exception as e:
+                    st.warning(f"Erro ao baixar o som: {e}")
+            
+            # Tentar carregar o som baixado
+            if os.path.exists(downloaded_sound_path):
+                try:
+                    self.beep_sound = pygame.mixer.Sound(downloaded_sound_path)
+                except Exception as e:
+                    st.warning(f"Erro ao carregar o som MP3: {e}")
+                    self.beep_sound = None
             else:
-                # Tentar caminho alternativo se o primeiro falhar
+                # Tentar caminhos alternativos como fallback
+                sound_path = os.path.join(base_dir, "Data", "Áudios", "beep-08b.wav")
                 alt_sound_path = os.path.join(base_dir, "Assets", "beep-08b.wav")
-                if os.path.exists(alt_sound_path):
+                
+                if os.path.exists(sound_path):
+                    self.beep_sound = pygame.mixer.Sound(sound_path)
+                elif os.path.exists(alt_sound_path):
                     self.beep_sound = pygame.mixer.Sound(alt_sound_path)
                 else:
                     self.beep_sound = None
@@ -346,7 +381,14 @@ class TrainingTimer:
     def play_beep(self):
         if self.beep_sound:
             try:
+                # Parar qualquer som que esteja tocando
+                pygame.mixer.stop()
+                # Tocar o som
                 self.beep_sound.play()
+                # Pequena pausa para garantir que o som seja ouvido
+                time.sleep(0.1)
+            except Exception as e:
+                st.warning(f"Erro ao tocar o som: {e}")
             except:
                 pass
 
